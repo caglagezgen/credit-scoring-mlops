@@ -1,0 +1,54 @@
+# Base Configuration
+# Shared settings across all environments
+
+api:
+  host: "0.0.0.0"
+  port: 8000
+  debug: false
+  title: "Credit Scoring API"
+  description: "FastAPI service for predicting credit default risk"
+  version: "1.0.0"
+  docs_url: "/docs"
+
+model:
+  path: "/app/model/credit_model.pkl"
+  feature_columns_path: "/app/model/feature_columns.pkl"
+  load_on_startup: true
+  cache_model: true              # Keep model in memory
+
+logging:
+  level: "INFO"
+  format: "json"                 # JSON structured logging for machines
+  output: "logs/predictions.log"
+  max_size_mb: 100
+  backup_count: 5
+
+monitoring:
+  enable_drift_detection: true
+  drift_check_frequency_hours: 24
+  reference_data_path: "data/reference_data.csv"
+  
+  metrics:
+    track_latency: true
+    track_errors: true
+    track_predictions: true
+  
+  thresholds:
+    max_latency_ms: 1000         # Alert if API response > 1 second
+    max_error_rate: 0.05         # Alert if error rate > 5%
+    drift_threshold: 0.05        # Alert if KS test p-value < 5%
+
+data:
+  features_to_track:
+    - ext_source_1
+    - ext_source_2
+    - amt_income_total
+    - amt_credit
+    - age_years
+
+validation:
+  require_all_fields: true
+  validate_ranges: true
+  validate_types: true
+
+environment: "base"

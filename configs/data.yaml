@@ -1,0 +1,112 @@
+# Data Versioning and Management
+# Tracks which data version is used for training, testing, and reference
+
+data_catalog:
+  application_train:
+    name: "Home Credit Application Training Data"
+    version: "1.0"
+    source: "data/application_train.csv"
+    source_url: "https://www.kaggle.com/c/home-credit-default-risk/data"
+    description: "307,511 records with 122 features for credit default prediction"
+    rows: 307511
+    features_original: 122
+    features_selected: 18
+    download_date: "2026-04-06"
+    
+    # Data quality metrics
+    quality:
+      missing_value_percentage: 42.0    # % of cells with NaN
+      unique_values_min: 1
+      unique_values_max: 307511
+      duplicates: 0
+      corruption_detected: false
+    
+    # Data distribution
+    distribution:
+      target_variable: "target"
+      class_distribution:
+        no_default: 0.92               # 92% non-default
+        default: 0.08                  # 8% default (imbalanced)
+      data_type: "financial"
+      geography: "Eastern Europe"
+    
+    # Lineage
+    lineage:
+      original_source: "Kaggle Home Credit Default Risk Competition"
+      transformations_applied:
+        - "Feature selection (122 → 18)"
+        - "Missing value imputation (median)"
+        - "Categorical encoding (ordinal + binary)"
+        - "Feature engineering (3 ratios)"
+        - "Outlier handling (DAYS_EMPLOYED anomaly fix)"
+  
+  reference_data:
+    name: "Reference Dataset for Drift Detection"
+    version: "1.0"
+    source: "data/reference_data.csv"
+    description: "Training set statistics baseline for monitoring data drift"
+    rows: 246808                        # Training set (80% of 307,511)
+    features: 18
+    generated_date: "2026-04-06"
+    generated_from_version: "application_train:1.0"
+    
+    # Used for
+    purpose:
+      - "Data drift detection (compare recent data distribution)"
+      - "Feature distribution baseline"
+      - "Outlier detection baseline"
+
+# Data quality rules
+quality_checks:
+  - name: "No missing values in key features"
+    features: [ext_source_1, ext_source_2, amt_income_total]
+    rule: "missing_pct < 5%"
+  
+  - name: "Income must be positive"
+    features: [amt_income_total]
+    rule: "value > 0"
+  
+  - name: "Age within reasonable range"
+    features: [age_years]
+    rule: "18 <= value <= 80"
+  
+  - name: "Credit <= Goods Price"
+    features: [amt_credit, amt_goods_price]
+    rule: "credit_amount <= goods_price * 1.5"
+
+# Schema validation (data contracts)
+schema:
+  ext_source_1:
+    type: "float"
+    range: [0.0, 1.0]
+    nullable: false
+  
+  ext_source_2:
+    type: "float"
+    range: [0.0, 1.0]
+    nullable: false
+  
+  ext_source_3:
+    type: "float"
+    range: [0.0, 1.0]
+    nullable: false
+  
+  amt_income_total:
+    type: "float"
+    range: [25000, 500000]
+    nullable: false
+  
+  amt_credit:
+    type: "float"
+    range: [25000, 4000000]
+    nullable: false
+  
+  age_years:
+    type: "float"
+    range: [18, 80]
+    nullable: false
+  
+  education_level:
+    type: "int"
+    range: [0, 4]
+    nullable: false

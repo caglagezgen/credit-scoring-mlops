@@ -1,0 +1,83 @@
+# Experiment Configuration
+# This file centralizes all hyperparameters and experiment settings
+# to ensure reproducibility and easy experimentation
+
+experiment:
+  name: "credit_scoring_v1"
+  description: "Gradient Boosting model for Home Credit default prediction"
+  version: "1.0.0"
+  created_date: "2026-04-06"
+  author: "ML Team"
+
+model:
+  name: "GradientBoostingClassifier"
+  framework: "scikit-learn"
+  hyperparameters:
+    n_estimators: 200          # Number of boosting stages
+    max_depth: 4               # Maximum tree depth (prevents overfitting)
+    learning_rate: 0.1         # Shrinks feature contribution (regularization)
+    subsample: 0.8             # Fraction of samples for building trees (stochastic)
+    min_samples_split: 20      # Min samples to split a node
+    min_samples_leaf: 10       # Min samples at leaf nodes
+    random_state: 42           # Reproducibility seed
+    verbose: 0                 # Logging level (0=silent, >0=verbose)
+
+data:
+  source: "data/application_train.csv"
+  version: "1.0"              # Data version (increment when dataset changes)
+  train_test_split: 0.2
+  stratify: true              # Maintain class distribution in splits
+  random_seed: 42             # Data split seed for reproducibility
+  
+  preprocessing:
+    handle_missing_values: "median"  # Strategy for NaN values
+    encoding_strategy: "ordinal"      # Categorical encoding method
+    scaling: "standard"               # Feature scaling method
+
+features:
+  selected_feature_count: 18
+  total_available_features: 122
+  selected_features:
+    source_features:
+      - ext_source_1
+      - ext_source_2
+      - ext_source_3
+      - amt_income_total
+      - amt_credit
+      - amt_annuity
+      - amt_goods_price
+      - code_gender
+      - flag_own_car
+      - flag_own_realty
+      - age_years
+      - education_level
+      - days_employed_years
+      - days_id_publish_years
+      - days_birth_years
+    
+    engineered_features:
+      - credit_income_ratio           # amt_credit / amt_income_total
+      - annuity_income_ratio          # amt_annuity / amt_income_total
+      - credit_goods_ratio            # amt_credit / amt_goods_price
+
+evaluation:
+  metrics:
+    - roc_auc
+    - precision
+    - recall
+    - f1
+    - confusion_matrix
+  
+  baseline_metrics:
+    expected_roc_auc: 0.75           # Target performance
+    minimum_roc_auc: 0.70            # Minimum acceptable
+  
+  test_size: 0.2
+  cross_validation_folds: 5
+
+output:
+  model_artifact_path: "model/credit_model.pkl"
+  feature_columns_path: "model/feature_columns.pkl"
+  metadata_path: "model/metadata.json"
+  reference_data_path: "data/reference_data.csv"
+  training_metrics_path: "results/training_metrics.json"

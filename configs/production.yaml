@@ -1,0 +1,33 @@
+# Production Configuration
+# Overrides for production environment
+# Inherits from base.yaml, only specify changes
+
+api:
+  debug: false
+  host: "0.0.0.0"
+  port: 8000
+
+model:
+  load_on_startup: true
+  cache_model: true
+
+logging:
+  level: "WARNING"              # Only log warnings/errors in prod
+  format: "json"
+  output: "logs/predictions.log"
+
+monitoring:
+  enable_drift_detection: true
+  drift_check_frequency_hours: 24
+  
+  metrics:
+    track_latency: true
+    track_errors: true
+    track_predictions: true
+    send_to_cloudwatch: true    # Send to AWS CloudWatch
+  
+  thresholds:
+    max_latency_ms: 500         # Stricter in production
+    max_error_rate: 0.01        # 1% error rate max
+
+environment: "production"
