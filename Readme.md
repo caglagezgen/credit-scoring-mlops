@@ -179,7 +179,6 @@ credit-scoring-mlops/
 ├── Dockerfile                    # Docker image recipe
 ├── requirements.txt              # Python dependencies
 ├── train_model.py                # Model training script
-├── MLOPS_DEVELOPMENT_GUIDE.md   # Detailed guide
 └── README.md                     # This file
 ```
 

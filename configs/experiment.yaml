@@ -37,28 +37,10 @@ data:
 features:
   selected_feature_count: 18
   total_available_features: 122
-  selected_features:
-    source_features:
-      - ext_source_1
-      - ext_source_2
-      - ext_source_3
-      - amt_income_total
-      - amt_credit
-      - amt_annuity
-      - amt_goods_price
-      - code_gender
-      - flag_own_car
-      - flag_own_realty
-      - age_years
-      - education_level
-      - days_employed_years
-      - days_id_publish_years
-      - days_birth_years
-    
-    engineered_features:
-      - credit_income_ratio           # amt_credit / amt_income_total
-      - annuity_income_ratio          # amt_annuity / amt_income_total
-      - credit_goods_ratio            # amt_credit / amt_goods_price
+  engineered_features:
+    - credit_income_ratio           # amt_credit / amt_income_total
+    - annuity_income_ratio          # amt_annuity / amt_income_total
+    - credit_goods_ratio            # amt_credit / amt_goods_price
 
 evaluation:
   metrics:
