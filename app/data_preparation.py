@@ -78,9 +78,19 @@ def load_and_prepare_data(filepath: str = 'data/application_train.csv') -> Tuple
     print("\nEncoding categorical variables:")
     
     # Binary encoding for gender and flags
-    X['CODE_GENDER'] = X['CODE_GENDER'].map({'M': 0, 'F': 1}).fillna(0).astype(int)
-    X['FLAG_OWN_CAR'] = X['FLAG_OWN_CAR'].map({'N': 0, 'Y': 1}).astype(int)
-    X['FLAG_OWN_REALTY'] = X['FLAG_OWN_REALTY'].map({'N': 0, 'Y': 1}).astype(int)
+    # Handle both string values (from real data) and numeric values (from synthetic data)
+    X['CODE_GENDER'] = X['CODE_GENDER'].apply(
+        lambda x: x if isinstance(x, (int, float)) else {'M': 0, 'F': 1, 'M': 0}.get(x, 0)
+    ).fillna(0).astype(int)
+    
+    X['FLAG_OWN_CAR'] = X['FLAG_OWN_CAR'].apply(
+        lambda x: x if isinstance(x, (int, float)) else {'N': 0, 'Y': 1}.get(x, 0)
+    ).fillna(0).astype(int)
+    
+    X['FLAG_OWN_REALTY'] = X['FLAG_OWN_REALTY'].apply(
+        lambda x: x if isinstance(x, (int, float)) else {'N': 0, 'Y': 1}.get(x, 0)
+    ).fillna(0).astype(int)
+    
     print("  CODE_GENDER: {M → 0, F → 1}")
     print("  FLAG_OWN_CAR: {N → 0, Y → 1}")
     print("  FLAG_OWN_REALTY: {N → 0, Y → 1}")
@@ -93,7 +103,10 @@ def load_and_prepare_data(filepath: str = 'data/application_train.csv') -> Tuple
         'Higher education': 3,
         'Academic degree': 4,
     }
-    X['EDUCATION_LEVEL'] = X['NAME_EDUCATION_TYPE'].map(education_map).fillna(1).astype(int)
+    # Handle both string and numeric education values
+    X['EDUCATION_LEVEL'] = X['NAME_EDUCATION_TYPE'].apply(
+        lambda x: x if isinstance(x, int) else education_map.get(x, 1)
+    ).fillna(1).astype(int)
     X = X.drop(columns=['NAME_EDUCATION_TYPE'])
     print("  EDUCATION_LEVEL: ordinal encoding (0=Lower secondary, 4=Academic degree)")
     
