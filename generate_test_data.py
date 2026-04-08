@@ -2,6 +2,10 @@
 """
 Generate minimal training dataset for CI/CD testing.
 Creates a small dataset with the same schema as the real Kaggle dataset.
+
+CRITICAL: DAYS_BIRTH range must produce ages 18-150 for validation.
+  18 years = 6574.5 days → randint upper bound = -6575 (exclusive)
+  80 years = 29220 days → randint lower bound = -29220
 """
 
 import pandas as pd
@@ -14,17 +18,11 @@ def generate_test_dataset(n_samples=5000, output_path="data/application_train.cs
     
     np.random.seed(42)
     
-    # DAYS_BIRTH calculation:
-    # - Negative value (days in past)
-    # - 18 years = 18 * 365.25 = 6574.5 days
-    # - 80 years = 80 * 365.25 = 29220 days
-    # So range should be -29220 to -6574 (in days)
-    
     data = {
         'EXT_SOURCE_1': np.random.uniform(0, 1, n_samples),
         'EXT_SOURCE_2': np.random.uniform(0, 1, n_samples),
         'EXT_SOURCE_3': np.random.uniform(0, 1, n_samples),
-        'DAYS_BIRTH': np.random.randint(-29220, -6574, n_samples),  # 18-80 years old
+        'DAYS_BIRTH': np.random.randint(-29220, -6575, n_samples),  # Ages: 18-80 years
         'DAYS_EMPLOYED': np.random.randint(-10000, 1, n_samples),
         'DAYS_ID_PUBLISH': np.random.randint(-10000, 0, n_samples),
         'AMT_INCOME_TOTAL': np.random.uniform(25000, 500000, n_samples),
