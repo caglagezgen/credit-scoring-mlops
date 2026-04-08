@@ -12,39 +12,6 @@ A complete, production-ready MLOps pipeline for predicting loan default probabil
 - Data drift detection
 - Performance optimization with ONNX
 
-📦 Core Application (app)
-main.py — FastAPI server (300+ lines) with prediction endpoints
-model_loader.py — Model initialization and loading
-data_preparation.py — Data preprocessing logic
-schemas.py — Pydantic models for input/output validation
-🤖 Model Artifacts (model)
-credit_scoring_model.joblib — Trained scikit-learn model
-credit_model.pkl — Model checkpoint (legacy format)
-feature_columns.json/pkl — Feature metadata
-metadata.json — Model versioning and metadata
-MODEL_CARD.md — Comprehensive model documentation (300+ lines)
-📓 Notebooks (notebooks) — Complete ML workflow
-01_data_exploration_and_preparation.ipynb
-02_model_training_and_evaluation.ipynb
-03_performance_optimization_and_inference.ipynb
-data_drift_analysis.ipynb — Monitoring & drift detection
-⚙️ Configuration (configs)
-base.yaml — Base configuration
-data.yaml, experiment.yaml, production.yaml — Environment-specific configs
-🧪 Testing (tests)
-test_api.py — FastAPI endpoint tests (150+ lines)
-test_model.py — Model tests (120+ lines)
-conftest.py — Pytest fixtures
-📊 Data (data)
-application_train.csv — Training dataset
-reference_data.csv, test_data.csv, test_labels.csv
-📚 Key Features
-Stack: FastAPI, scikit-learn, Pydantic, Docker
-ML Ops: Data drift detection (Evidently), ONNX optimization, CI/CD ready
-Monitoring: Logger module, model card, baseline metrics
-Dependencies: ~25 packages in requirements.txt
-
-
 ---
 
 ## Quick Start
@@ -374,45 +341,6 @@ docker system prune -a
 docker build --no-cache -t credit-scoring-api .
 ```
 
----
-
-## Performance Benchmarks
-
-| Component | Latency | Throughput |
-|-----------|---------|-----------|
-| API endpoint (uvicorn) | ~15-20ms | ~50-100 req/s |
-| Model inference (sklearn) | ~5-10ms | — |
-| Model inference (ONNX) | ~1-2ms | — |
-| Input validation (Pydantic) | <1ms | — |
-
----
-
-## Key Learnings (From Reference Article)
-
-1. **Data preparation is 50% of the work** — real data is messy
-2. **Load models once, never per request** — single biggest performance decision
-3. **Validate everything at the boundary** — Pydantic catches edge cases
-4. **Test invalid inputs** — silent failures are dangerous
-5. **Docker eliminates environment surprises** — reproducibility matters
-6. **CI/CD is your quality gate** — broken code doesn't reach production
-7. **Monitor for drift** — models degrade silently without monitoring
-8. **Profile before optimizing** — measure before you optimize
-9. **Start simple, iterate** — don't build everything at once
-10. **Understand the why** — not just the how
-
----
-
-## Resources
-
-- [HackerNoon Article](https://hackernoon.com/weekend-project-i-built-a-full-mlops-pipeline-for-a-credit-scoring-model-and-you-can-too) — Complete step-by-step guide
-- [FastAPI Documentation](https://fastapi.tiangolo.com/) — API framework
-- [Pydantic Documentation](https://docs.pydantic.dev/) — Input validation
-- [Docker Documentation](https://docs.docker.com/) — Containerization
-- [Evidently AI](https://docs.evidentlyai.com/) — Drift detection
-- [scikit-learn Pipelines](https://scikit-learn.org/stable/modules/pipeline.html) — Model pipelines
-- [GitHub Actions](https://docs.github.com/en/actions) — CI/CD
-
----
 
 ## License
 
@@ -449,10 +377,5 @@ This project is educational. The Home Credit dataset is provided by Home Credit 
    - Run `notebooks/data_drift_analysis.ipynb`
    - Set up automated drift reports
    - Establish retraining triggers
-
-6. **Optimize Performance**
-   - Convert to ONNX format
-   - Benchmark against baseline
-   - Deploy optimized version
 
 ---
