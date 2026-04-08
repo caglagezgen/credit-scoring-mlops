@@ -1,8 +1,12 @@
 {
-  "roc_auc": 0.7548783042726799,
-  "f1_score": 0.04652951355508556,
-  "precision": 0.5127118644067796,
-  "recall": 0.024370594159113797,
-  "training_samples": 246008,
-  "test_samples": 61503
+  "roc_auc": 0.524072966507177,
+  "f1_score": 0.0,
+  "precision": 0.0,
+  "recall": 0.0,
+  "training_samples": 4000,
+  "test_samples": 1000,
+  "training_date": "2026-04-08T20:24:10.791367",
+  "model_type": "GradientBoostingClassifier",
+  "cv_mean_auc": 0.4987211500205547,
+  "cv_std_auc": 0.03130220116196648
 }
