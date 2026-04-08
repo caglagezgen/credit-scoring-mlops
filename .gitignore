@@ -48,6 +48,11 @@ notebooks/.ipynb_checkpoints/
 
 # Model artifacts (local training only)
 model/*.pkl
+
+# Environment variables (NEVER COMMIT THESE)
+.env
+.env.local
+.env*.local
 model/*.onnx
 *.pkl
 
