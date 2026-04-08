@@ -16,8 +16,23 @@ def load_model():
     """Load model and feature list ONCE at startup."""
     global _model, _feature_columns
     
-    model_path = os.environ.get("MODEL_PATH", "model/credit_model.pkl")
-    features_path = os.environ.get("FEATURES_PATH", "model/feature_columns.pkl")
+    # Check environment variables first
+    if "MODEL_PATH" in os.environ:
+        model_path = os.environ["MODEL_PATH"]
+    else:
+        # Fallback: construct absolute path from module location
+        # app/model_loader.py -> app/ -> project_root/
+        module_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(module_dir)
+        model_path = os.path.join(project_root, "model", "credit_model.pkl")
+    
+    if "FEATURES_PATH" in os.environ:
+        features_path = os.environ["FEATURES_PATH"]
+    else:
+        # Fallback: construct absolute path from module location
+        module_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(module_dir)
+        features_path = os.path.join(project_root, "model", "feature_columns.pkl")
     
     if not os.path.exists(model_path):
         raise FileNotFoundError(f"Model not found at {model_path}")

@@ -12,6 +12,39 @@ A complete, production-ready MLOps pipeline for predicting loan default probabil
 - Data drift detection
 - Performance optimization with ONNX
 
+📦 Core Application (app)
+main.py — FastAPI server (300+ lines) with prediction endpoints
+model_loader.py — Model initialization and loading
+data_preparation.py — Data preprocessing logic
+schemas.py — Pydantic models for input/output validation
+🤖 Model Artifacts (model)
+credit_scoring_model.joblib — Trained scikit-learn model
+credit_model.pkl — Model checkpoint (legacy format)
+feature_columns.json/pkl — Feature metadata
+metadata.json — Model versioning and metadata
+MODEL_CARD.md — Comprehensive model documentation (300+ lines)
+📓 Notebooks (notebooks) — Complete ML workflow
+01_data_exploration_and_preparation.ipynb
+02_model_training_and_evaluation.ipynb
+03_performance_optimization_and_inference.ipynb
+data_drift_analysis.ipynb — Monitoring & drift detection
+⚙️ Configuration (configs)
+base.yaml — Base configuration
+data.yaml, experiment.yaml, production.yaml — Environment-specific configs
+🧪 Testing (tests)
+test_api.py — FastAPI endpoint tests (150+ lines)
+test_model.py — Model tests (120+ lines)
+conftest.py — Pytest fixtures
+📊 Data (data)
+application_train.csv — Training dataset
+reference_data.csv, test_data.csv, test_labels.csv
+📚 Key Features
+Stack: FastAPI, scikit-learn, Pydantic, Docker
+ML Ops: Data drift detection (Evidently), ONNX optimization, CI/CD ready
+Monitoring: Logger module, model card, baseline metrics
+Dependencies: ~25 packages in requirements.txt
+
+
 ---
 
 ## Quick Start

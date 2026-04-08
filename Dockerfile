@@ -14,7 +14,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app/ ./app/
 COPY model/ ./model/
 COPY train_model.py .
-COPY README.md .
+COPY Readme.md .
 
 # Document the port (purely informational)
 EXPOSE 8000
