@@ -22,6 +22,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import classification_report, roc_auc_score, confusion_matrix
+from sklearn.utils.class_weight import compute_sample_weight
 import yaml
 import subprocess
 
@@ -300,8 +301,12 @@ def train_credit_model():
     print("\n4. TRAINING MODEL")
     print("-" * 80)
     print(f"Training on {X_train.shape[0]:,} samples with {X_train.shape[1]} features...")
-    pipeline.fit(X_train, y_train)
-    print("✓ Training complete")
+    
+    # Apply sample weights to handle class imbalance (91% non-default vs 9% default)
+    sample_weights = compute_sample_weight('balanced', y_train)
+    
+    pipeline.fit(X_train, y_train, classifier__sample_weight=sample_weights)
+    print("✓ Training complete (class weights applied for imbalanced data)")
     
     # ===== EVALUATE ON TEST SET =====
     print("\n5. EVALUATION")
