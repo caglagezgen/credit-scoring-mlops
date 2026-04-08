@@ -339,7 +339,7 @@ def train_credit_model():
     print(f"  3. Build Docker image: docker build -t credit-scoring-api .")
     print(f"  4. Monitor for data drift using {config['output']['reference_data_path']}")
     
-    return pipeline, roc_auc
+    return pipeline, roc_auc_test
 
 
 if __name__ == '__main__':
