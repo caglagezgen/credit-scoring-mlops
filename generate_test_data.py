@@ -14,11 +14,17 @@ def generate_test_dataset(n_samples=5000, output_path="data/application_train.cs
     
     np.random.seed(42)
     
+    # DAYS_BIRTH calculation:
+    # - Negative value (days in past)
+    # - 18 years = 18 * 365.25 = 6574.5 days
+    # - 80 years = 80 * 365.25 = 29220 days
+    # So range should be -29220 to -6574 (in days)
+    
     data = {
         'EXT_SOURCE_1': np.random.uniform(0, 1, n_samples),
         'EXT_SOURCE_2': np.random.uniform(0, 1, n_samples),
         'EXT_SOURCE_3': np.random.uniform(0, 1, n_samples),
-        'DAYS_BIRTH': np.random.randint(-25000, -5000, n_samples),
+        'DAYS_BIRTH': np.random.randint(-29220, -6574, n_samples),  # 18-80 years old
         'DAYS_EMPLOYED': np.random.randint(-10000, 1, n_samples),
         'DAYS_ID_PUBLISH': np.random.randint(-10000, 0, n_samples),
         'AMT_INCOME_TOTAL': np.random.uniform(25000, 500000, n_samples),
