@@ -1,74 +1,56 @@
 {
   "model_registry": {
-    "model_name": "credit_scoring",
-    "model_id": "credit_scoring_v1_0_0",
+    "model_name": "credit_scoring_v1",
+    "model_id": "credit_scoring_v1_1_0_0",
     "version": "1.0.0",
-    "created_date": "2026-04-06",
-    "created_by": "ML Team",
+    "created_date": "2026-04-08T17:31:52.332996",
+    "created_by": "Automated training pipeline",
     "model_type": "GradientBoostingClassifier",
     "framework": "scikit-learn",
-    "framework_version": "1.3.0",
-    "python_version": "3.11",
-    "status": "production",
-    "production_date": "2026-04-06"
+    "status": "trained"
   },
-
   "model_lineage": {
-    "git_commit": "TBD",
-    "git_branch": "main",
+    "git_commit": "6fbd1a230e6cc1cb9c9db144b67e90b3cabb2f15",
+    "git_branch": "feature/model-versinoning",
     "training_script": "train_model.py",
     "config_file": "configs/experiment.yaml",
-    "data_version": "application_train_v1.0",
+    "data_version": "1.0",
     "feature_engineering_code": "app/data_preparation.py"
   },
-
   "training_info": {
-    "training_date": "2026-04-06",
-    "training_duration_seconds": "TBD",
-    "training_machine": "TBD",
-    "training_samples": 246808,
-    "test_samples": 61703,
-    "total_samples": 307511,
+    "training_date": "2026-04-08T17:31:52.332996",
+    "training_duration_seconds": 2.286451,
+    "training_samples": 4000,
+    "test_samples": 1000,
+    "total_samples": 5000,
     "feature_count": 18,
     "source_feature_count": 15,
     "engineered_feature_count": 3,
     "class_distribution_train": {
-      "no_default": 0.92,
-      "default": 0.08
+      "no_default": 0.91225,
+      "default": 0.08775
     },
     "class_distribution_test": {
-      "no_default": 0.92,
-      "default": 0.08
+      "no_default": 0.912,
+      "default": 0.088
     },
-    "train_test_split_ratio": 0.8,
+    "train_test_split_ratio": 0.2,
     "stratified": true,
     "random_seed": 42
   },
-
   "model_performance": {
     "training_set": {
-      "roc_auc": "TBD",
-      "pr_auc": "TBD",
-      "precision": "TBD",
-      "recall": "TBD",
-      "f1": "TBD",
-      "accuracy": "TBD"
+      "roc_auc": 0.9993707053175401,
+      "precision": 0.1590909090909091,
+      "recall": 0.1590909090909091
     },
     "test_set": {
-      "roc_auc": "TBD",
-      "pr_auc": "TBD",
-      "precision": "TBD",
-      "recall": "TBD",
-      "f1": "TBD",
-      "accuracy": "TBD"
-    },
-    "cross_validation": {
-      "cv_folds": 5,
-      "roc_auc_mean": "TBD",
-      "roc_auc_std": "TBD"
+      "roc_auc": 0.5507002591706538,
+      "precision": 0.1590909090909091,
+      "recall": 0.1590909090909091,
+      "specificity": 0.918859649122807
     }
   },
-
   "hyperparameters": {
     "n_estimators": 200,
     "max_depth": 4,
@@ -76,117 +58,18 @@
     "subsample": 0.8,
     "min_samples_split": 20,
     "min_samples_leaf": 10,
-    "random_state": 42
+    "random_state": 42,
+    "verbose": 0
   },
-
-  "feature_importance": {
-    "method": "gini_importance",
-    "top_10_features": [
-      {
-        "name": "TBD",
-        "importance": "TBD",
-        "rank": 1
-      }
-    ],
-    "least_important_features": [
-      {
-        "name": "TBD",
-        "importance": "TBD"
-      }
-    ]
-  },
-
   "preprocessing": {
-    "scaling": {
-      "method": "StandardScaler",
-      "fit_on": "training_set",
-      "applied_to": "all_numeric_features"
-    },
-    "missing_values": {
-      "strategy": "median_imputation",
-      "percentage_missing": "TBD"
-    },
-    "outlier_handling": {
-      "DAYS_EMPLOYED_anomaly": "Fixed (365243 → NaN, then imputed)"
-    },
-    "categorical_encoding": {
-      "binary_features": "Binary encoding (0/1)",
-      "ordinal_features": "Ordinal encoding (preserves order)"
-    }
+    "scaling": "standard",
+    "missing_values": "median",
+    "encoding": "ordinal"
   },
-
-  "data_quality": {
-    "missing_values_percent": "TBD",
-    "duplicates": 0,
-    "data_type_errors": 0,
-    "anomalies_detected": 1,
-    "anomaly_details": "DAYS_EMPLOYED has unrealistic value (365243) for unemployed flag"
-  },
-
-  "deployment": {
-    "deployment_date": "TBD",
-    "deployment_method": "Docker Container",
-    "deployment_platform": "TBD",
-    "inference_endpoint": "POST /predict",
-    "inference_latency_ms": {
-      "p50": "TBD",
-      "p95": "TBD",
-      "p99": "TBD"
-    },
-    "serving_framework": "FastAPI",
-    "model_format": "Pickle (scikit-learn)",
-    "optimization_status": "ONNX conversion ready"
-  },
-
-  "monitoring": {
-    "monitoring_enabled": true,
-    "drift_detection_enabled": true,
-    "drift_check_frequency": "daily",
-    "reference_data_path": "data/reference_data.csv",
-    "metrics_tracked": [
-      "data_drift",
-      "prediction_drift",
-      "latency",
-      "error_rate",
-      "feature_distribution"
-    ]
-  },
-
-  "limitations_and_biases": {
-    "dataset_bias": "Imbalanced dataset (92% non-default, 8% default)",
-    "geographic_scope": "Eastern Europe (specific to Home Credit data)",
-    "temporal_scope": "Historical data from 2015-2018",
-    "feature_limitations": "Limited to 15 selected features out of 122",
-    "known_biases": "May be biased against certain demographic groups (requires fairness audit)",
-    "data_privacy": "Anonymized data (no PII in raw features)"
-  },
-
-  "maintenance": {
-    "retrain_frequency": "quarterly",
-    "retraining_trigger_conditions": [
-      "ROC AUC drops below 0.70",
-      "High data drift detected (KS test p < 0.05)",
-      "Error rate exceeds 1%"
-    ],
-    "last_retrain_date": "2026-04-06",
-    "next_retrain_date": "2026-07-06",
-    "archival_plan": "Models older than 1 year archived to S3"
-  },
-
-  "compliance": {
-    "model_type": "Credit Risk Assessment",
-    "regulatory_framework": "GDPR, Fair Lending Regulations",
-    "fairness_assessment_done": false,
-    "explainability_available": true,
-    "audit_trail": "Git repository with full history",
-    "documentation": "Complete (MLOPS_DEVELOPMENT_GUIDE.md, MODEL_CARD.md)"
-  },
-
-  "resources": {
-    "code_repository": "https://github.com/user/credit-scoring-mlops",
-    "documentation": "README.md, MLOPS_DEVELOPMENT_GUIDE.md",
-    "model_card": "model/MODEL_CARD.md",
-    "performance_tracking": "Prometheus + Grafana (optional)",
-    "contact": "ml-team@company.com"
+  "output_paths": {
+    "model_artifact": "model/credit_model.pkl",
+    "feature_columns": "model/feature_columns.pkl",
+    "reference_data": "data/reference_data.csv",
+    "metadata": "model/metadata.json"
   }
 }
