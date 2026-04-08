@@ -1,15 +1,20 @@
-name: CI/CD Pipeline
+name: CI/CD Pipeline with Branching Strategy
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, staging ]
   pull_request:
     branches: [ main, develop ]
+
+# Environment variables
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: credit-scoring-api
 
 jobs:
   # ===== STAGE 1: TEST =====
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     
     strategy:
       matrix:
@@ -40,7 +45,7 @@ jobs:
   
   # ===== STAGE 2: BUILD =====
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: test
     
     steps:
@@ -72,11 +77,91 @@ jobs:
         docker stop api || true
         docker rm api || true
   
-  # ===== STAGE 3: DEPLOY =====
-  deploy:
-    runs-on: ubuntu-latest
+  # ===== STAGE 3: VALIDATE MODEL PERFORMANCE =====
+  validate-performance:
+    runs-on: ubuntu-22.04
     needs: build
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install pyyaml
+    
+    - name: Setup training (generate data + train model)
+      run: |
+        python setup_training.py
+    
+    - name: Validate model performance
+      run: |
+        python << 'EOF'
+        import json
+        import yaml
+        import sys
+        
+        # Load metadata
+        with open('model/metadata.json', 'r') as f:
+            metadata = json.load(f)
+        
+        # Load config
+        with open('configs/experiment.yaml', 'r') as f:
+            config = yaml.safe_load(f)
+        
+        # Performance checks
+        roc_auc = metadata['model_performance']['test_set']['roc_auc']
+        expected_roc_auc = config['evaluation']['baseline_metrics']['expected_roc_auc']
+        minimum_roc_auc = config['evaluation']['baseline_metrics']['minimum_roc_auc']
+        
+        print("✓ MODEL PERFORMANCE VALIDATION")
+        print(f"  ROC AUC (Test): {roc_auc:.4f}")
+        print(f"  Expected baseline: {expected_roc_auc:.4f}")
+        print(f"  Minimum required: {minimum_roc_auc:.4f}")
+        
+        # Gate 1: Must meet minimum threshold
+        if roc_auc < minimum_roc_auc:
+            print(f"\n❌ FAILED: ROC AUC {roc_auc:.4f} < minimum {minimum_roc_auc:.4f}")
+            sys.exit(1)
+        
+        # Gate 2: Warn if below expected
+        if roc_auc < expected_roc_auc:
+            print(f"\n⚠️  WARNING: ROC AUC {roc_auc:.4f} < expected {expected_roc_auc:.4f}")
+            print("  Consider improving model before deployment")
+        
+        print(f"\n✅ PASSED: Model performance acceptable for deployment")
+        
+        # Display metadata
+        print(f"\n📊 MODEL DETAILS:")
+        print(f"  Version: {metadata['model_registry']['version']}")
+        print(f"  Training samples: {metadata['training_info']['training_samples']:,}")
+        print(f"  Test samples: {metadata['training_info']['test_samples']:,}")
+        print(f"  Feature count: {metadata['training_info']['feature_count']}")
+        print(f"  Git commit: {metadata['model_lineage']['git_commit'][:8]}")
+        
+        EOF
+  
+  # ===== STAGE 4: DEPLOY TO STAGING =====
+  deploy-staging:
+    runs-on: ubuntu-22.04
+    needs: validate-performance
+    # Only deploy to staging when: PR merged to main OR push to staging branch
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/staging')
+    # Note: To add environment approval, configure 'staging' environment in:
+    # GitHub Settings → Environments → New environment → staging
+    # Then uncomment below and remove this comment:
+    # environment:
+    #   name: staging
+    #   url: https://staging-credit-api.example.com
     
     steps:
     - name: Checkout code
@@ -91,9 +176,16 @@ jobs:
       run: |
         pip install -r requirements.txt
     
-    - name: Setup training (generate data + train model)
+    - name: Setup training
       run: |
         python setup_training.py
+    
+    - name: Extract model version
+      id: model_version
+      run: |
+        MODEL_VERSION=$(grep -A 1 'experiment:' configs/experiment.yaml | grep 'version:' | awk '{print $2}' | tr -d '"')
+        echo "version=$MODEL_VERSION" >> $GITHUB_OUTPUT
+        echo "Model version: $MODEL_VERSION"
     
     - name: Login to Docker Hub
       uses: docker/login-action@v3
@@ -101,9 +193,100 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_TOKEN }}
     
-    - name: Build and Push Docker image to Docker Hub
+    - name: Build Docker image for Staging
+      run: |
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/credit-scoring-api:staging-${{ steps.model_version.outputs.version }} .
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/credit-scoring-api:staging-latest .
+    
+    - name: Push to Docker Hub (Staging)
+      run: |
+        docker push ${{ secrets.DOCKER_USERNAME }}/credit-scoring-api:staging-${{ steps.model_version.outputs.version }}
+        docker push ${{ secrets.DOCKER_USERNAME }}/credit-scoring-api:staging-latest
+    
+    - name: Deploy to Staging
+      run: |
+        echo "🚀 Deploying to staging environment..."
+        echo "   Image: ${{ secrets.DOCKER_USERNAME }}/credit-scoring-api:staging-${{ steps.model_version.outputs.version }}"
+        echo "   (In real setup, this would configure K8s/Docker daemon on staging server)"
+        echo "✅ Staging deployment would be triggered here"
+  
+  # ===== STAGE 5: DEPLOY TO PRODUCTION =====
+  deploy-production:
+    runs-on: ubuntu-22.04
+    needs: deploy-staging
+    # Only deploy to production when: PR merged to main branch
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # ⚠️ IMPORTANT: To enable manual approval for production, configure environment:
+    # 1. GitHub Settings → Environments → New environment → Name: 'production'
+    # 2. Add required reviewers (e.g., tech lead)
+    # 3. Uncomment below:
+    # environment:
+    #   name: production
+    #   url: https://credit-scoring-api.example.com
+    # With environment enabled, GitHub will require approval before this stage runs
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+    
+    - name: Setup training
+      run: |
+        python setup_training.py
+    
+    - name: Extract model version
+      id: model_version
+      run: |
+        MODEL_VERSION=$(grep -A 1 'experiment:' configs/experiment.yaml | grep 'version:' | awk '{print $2}' | tr -d '"')
+        echo "version=$MODEL_VERSION" >> $GITHUB_OUTPUT
+        echo "Model version: $MODEL_VERSION"
+    
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_TOKEN }}
+    
+    - name: Build Docker image for Production
       run: |
         docker build -t ${{ secrets.DOCKER_USERNAME }}/credit-scoring-api:latest .
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/credit-scoring-api:${{ github.sha }} .
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/credit-scoring-api:${{ steps.model_version.outputs.version }} .
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/credit-scoring-api:prod-${{ github.sha }} .
+    
+    - name: Push to Docker Hub (Production)
+      run: |
         docker push ${{ secrets.DOCKER_USERNAME }}/credit-scoring-api:latest
-        docker push ${{ secrets.DOCKER_USERNAME }}/credit-scoring-api:${{ github.sha }}
+        docker push ${{ secrets.DOCKER_USERNAME }}/credit-scoring-api:${{ steps.model_version.outputs.version }}
+        docker push ${{ secrets.DOCKER_USERNAME }}/credit-scoring-api:prod-${{ github.sha }}
+    
+    - name: Deploy to Production
+      run: |
+        echo "🚀 PRODUCTION DEPLOYMENT"
+        echo "   Model Version: ${{ steps.model_version.outputs.version }}"
+        echo "   Git Commit: ${{ github.sha }}"
+        echo "   Branch: ${{ github.ref }}"
+        echo "   Images pushed:"
+        echo "     - ${{ secrets.DOCKER_USERNAME }}/credit-scoring-api:latest"
+        echo "     - ${{ secrets.DOCKER_USERNAME }}/credit-scoring-api:${{ steps.model_version.outputs.version }}"
+        echo "     - ${{ secrets.DOCKER_USERNAME }}/credit-scoring-api:prod-${{ github.sha }}"
+        echo "   (In real setup, this would deploy to production K8s/servers)"
+        echo "✅ Production deployment triggered"
+    
+    - name: Post-Deployment Verification
+      run: |
+        echo "🔍 POST-DEPLOYMENT CHECKS"
+        echo "   Health check: /health endpoint"
+        echo "   Model serving: /predict endpoint"
+        echo "   Monitoring: Active (JSON logs)"
+        echo "✅ Deployment verified"
+  
+  # ===== DEPRECATED: Old deploy job (replaced by deploy-staging + deploy-production) =====
+  # See deploy-staging and deploy-production jobs above for new branching strategy

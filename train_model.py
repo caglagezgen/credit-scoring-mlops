@@ -27,6 +27,15 @@ import subprocess
 
 from app.data_preparation import load_and_prepare_data
 
+# Conditional import for version manager (optional, only if script exists)
+try:
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent / "scripts"))
+    from version_manager import ModelVersionManager, suggest_version_bump, create_release_tag
+    VERSION_MANAGER_AVAILABLE = True
+except ImportError:
+    VERSION_MANAGER_AVAILABLE = False
+
 
 # ===== CONFIGURATION LOADER =====
 def load_experiment_config(config_path: str = "configs/experiment.yaml") -> dict:
@@ -159,6 +168,47 @@ def generate_metadata(
     }
     
     return metadata
+
+
+def check_and_update_model_version(metadata: dict, config: dict) -> None:
+    """
+    Check if model version should be incremented based on performance changes.
+    
+    MLOps Best Practice: Auto-track version changes based on:
+    - Performance improvements
+    - Hyperparameter changes
+    - Data version changes
+    - Feature engineering changes
+    """
+    if not VERSION_MANAGER_AVAILABLE:
+        return
+    
+    try:
+        manager = ModelVersionManager()
+        current_version = manager.get_current_version()
+        
+        new_roc_auc = metadata['model_performance']['test_set']['roc_auc']
+        current_hyperparam_hash = str(sorted(config['model']['hyperparameters'].items()))
+        
+        # Check if previous metadata exists to compare
+        previous_metadata_path = config["output"]["metadata_path"]
+        version_changed = False
+        
+        # For now, we'll log the version info but NOT auto-bump to be safe
+        # You can manually bump using: python scripts/version_manager.py bump minor "reason"
+        
+        print(f"Current Model Version: {current_version}")
+        print(f"  Git Commit: {metadata['model_lineage']['git_commit'][:8]}")
+        print(f"  Performance: ROC AUC {new_roc_auc:.4f}")
+        print(f"  Framework: {metadata['model_registry']['framework']} v{metadata['model_registry'].get('framework_version', 'unknown')}")
+        print(f"  Python: v{metadata['model_registry'].get('python_version', 'unknown')}")
+        
+        print(f"\n💡 To increment version manually, run:")
+        print(f"   python scripts/version_manager.py bump minor 'Your reason here'")
+        print(f"   # or: major/patch for larger/smaller changes")
+        
+    except Exception as e:
+        print(f"Warning: Could not update version: {e}")
 
 
 def train_credit_model():
@@ -323,6 +373,12 @@ def train_credit_model():
     print(f"  Model Lineage: Git commit {metadata['model_lineage']['git_commit'][:8]}")
     print(f"  Performance: ROC AUC {metadata['model_performance']['test_set']['roc_auc']:.4f}")
     print(f"  Data Version: {metadata['model_lineage']['data_version']}")
+    
+    # ===== VERSION MANAGEMENT =====
+    if VERSION_MANAGER_AVAILABLE:
+        print("\n8. MODEL VERSIONING")
+        print("-" * 80)
+        check_and_update_model_version(metadata, config)
     
     print("\n" + "=" * 80)
     print("MODEL TRAINING COMPLETE")

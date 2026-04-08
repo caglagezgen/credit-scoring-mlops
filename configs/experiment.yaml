@@ -8,6 +8,8 @@ experiment:
   version: "1.0.0"
   created_date: "2026-04-06"
   author: "ML Team"
+  previous_version: null           # Track version lineage (1.0.0 ← 1.0.0-rc1)
+  version_history_file: "VERSION_HISTORY.md"  # Path to version history tracker
 
 model:
   name: "GradientBoostingClassifier"
