@@ -30,13 +30,9 @@ jobs:
         pip install -r requirements.txt
         pip install pytest pytest-asyncio httpx
     
-    - name: Generate test training data
+    - name: Setup training (generate data + train model)
       run: |
-        python generate_test_data.py
-    
-    - name: Train model from test data
-      run: |
-        python train_model.py
+        python setup_training.py
     
     - name: Run tests
       run: |
@@ -60,13 +56,9 @@ jobs:
       run: |
         pip install -r requirements.txt
     
-    - name: Generate test training data
+    - name: Setup training (generate data + train model)
       run: |
-        python generate_test_data.py
-    
-    - name: Train model
-      run: |
-        python train_model.py
+        python setup_training.py
     
     - name: Build Docker image
       run: |
@@ -99,13 +91,9 @@ jobs:
       run: |
         pip install -r requirements.txt
     
-    - name: Generate test training data
+    - name: Setup training (generate data + train model)
       run: |
-        python generate_test_data.py
-    
-    - name: Train model
-      run: |
-        python train_model.py
+        python setup_training.py
     
     - name: Login to Docker Hub
       uses: docker/login-action@v3
