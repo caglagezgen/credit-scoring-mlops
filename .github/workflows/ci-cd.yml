@@ -157,6 +157,8 @@ jobs:
     if: |
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
       (github.event_name == 'push' && github.ref == 'refs/heads/staging')
+    env:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
     # Note: To add environment approval, configure 'staging' environment in:
     # GitHub Settings → Environments → New environment → staging
     # Then uncomment below and remove this comment:
@@ -184,11 +186,17 @@ jobs:
     - name: Extract model version
       id: model_version
       run: |
-        MODEL_VERSION=$(grep -A 1 'experiment:' configs/experiment.yaml | grep 'version:' | awk '{print $2}' | tr -d '"')
+        MODEL_VERSION=$(grep '^\s*version:' configs/experiment.yaml | head -1 | awk '{print $2}' | tr -d '"')
+        if [ -z "$MODEL_VERSION" ]; then
+          echo "ERROR: Failed to extract MODEL_VERSION from configs/experiment.yaml"
+          echo "Version line should be: version: \"X.X.X\""
+          exit 1
+        fi
         echo "version=$MODEL_VERSION" >> $GITHUB_OUTPUT
-        echo "Model version: $MODEL_VERSION"
+        echo "✓ Model version: $MODEL_VERSION"
     
     - name: Login to Docker Hub
+      if: env.DOCKER_USERNAME != ''
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
@@ -196,13 +204,26 @@ jobs:
     
     - name: Build Docker image for Staging
       run: |
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/credit-scoring-api:staging-${{ steps.model_version.outputs.version }} .
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/credit-scoring-api:staging-latest .
+        DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}"
+        if [ -z "$DOCKER_USERNAME" ]; then
+          echo "⚠️  WARNING: DOCKER_USERNAME secret not set. Using local image naming."
+          DOCKER_USERNAME="local"
+        fi
+        docker build -t ${DOCKER_USERNAME}/credit-scoring-api:staging-${{ steps.model_version.outputs.version }} .
+        docker build -t ${DOCKER_USERNAME}/credit-scoring-api:staging-latest .
     
     - name: Push to Docker Hub (Staging)
+      if: env.DOCKER_USERNAME != ''
       run: |
         docker push ${{ secrets.DOCKER_USERNAME }}/credit-scoring-api:staging-${{ steps.model_version.outputs.version }}
         docker push ${{ secrets.DOCKER_USERNAME }}/credit-scoring-api:staging-latest
+    
+    - name: Skip push (no Docker credentials)
+      if: env.DOCKER_USERNAME == ''
+      run: |
+        echo "ℹ️  Skipping Docker push - DOCKER_USERNAME not configured"
+        echo "To enable Docker Hub push, set DOCKER_USERNAME and DOCKER_TOKEN secrets in:"
+        echo "GitHub Settings → Secrets and variables → Actions"
     
     - name: Deploy to Staging
       run: |
@@ -217,6 +238,8 @@ jobs:
     needs: deploy-staging
     # Only deploy to production when: PR merged to main branch
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
     # ⚠️ IMPORTANT: To enable manual approval for production, configure environment:
     # 1. GitHub Settings → Environments → New environment → Name: 'production'
     # 2. Add required reviewers (e.g., tech lead)
@@ -246,11 +269,17 @@ jobs:
     - name: Extract model version
       id: model_version
       run: |
-        MODEL_VERSION=$(grep -A 1 'experiment:' configs/experiment.yaml | grep 'version:' | awk '{print $2}' | tr -d '"')
+        MODEL_VERSION=$(grep '^\s*version:' configs/experiment.yaml | head -1 | awk '{print $2}' | tr -d '"')
+        if [ -z "$MODEL_VERSION" ]; then
+          echo "ERROR: Failed to extract MODEL_VERSION from configs/experiment.yaml"
+          echo "Version line should be: version: \"X.X.X\""
+          exit 1
+        fi
         echo "version=$MODEL_VERSION" >> $GITHUB_OUTPUT
-        echo "Model version: $MODEL_VERSION"
+        echo "✓ Model version: $MODEL_VERSION"
     
     - name: Login to Docker Hub
+      if: env.DOCKER_USERNAME != ''
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
@@ -258,15 +287,28 @@ jobs:
     
     - name: Build Docker image for Production
       run: |
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/credit-scoring-api:latest .
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/credit-scoring-api:${{ steps.model_version.outputs.version }} .
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/credit-scoring-api:prod-${{ github.sha }} .
+        DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}"
+        if [ -z "$DOCKER_USERNAME" ]; then
+          echo "⚠️  WARNING: DOCKER_USERNAME secret not set. Using local image naming."
+          DOCKER_USERNAME="local"
+        fi
+        docker build -t ${DOCKER_USERNAME}/credit-scoring-api:latest .
+        docker build -t ${DOCKER_USERNAME}/credit-scoring-api:${{ steps.model_version.outputs.version }} .
+        docker build -t ${DOCKER_USERNAME}/credit-scoring-api:prod-${{ github.sha }} .
     
     - name: Push to Docker Hub (Production)
+      if: env.DOCKER_USERNAME != ''
       run: |
         docker push ${{ secrets.DOCKER_USERNAME }}/credit-scoring-api:latest
         docker push ${{ secrets.DOCKER_USERNAME }}/credit-scoring-api:${{ steps.model_version.outputs.version }}
         docker push ${{ secrets.DOCKER_USERNAME }}/credit-scoring-api:prod-${{ github.sha }}
+    
+    - name: Skip push (no Docker credentials)
+      if: env.DOCKER_USERNAME == ''
+      run: |
+        echo "ℹ️  Skipping Docker push - DOCKER_USERNAME not configured"
+        echo "To enable Docker Hub push, set DOCKER_USERNAME and DOCKER_TOKEN secrets in:"
+        echo "GitHub Settings → Secrets and variables → Actions"
     
     - name: Deploy to Production
       run: |
